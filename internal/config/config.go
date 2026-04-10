@@ -1,74 +1,50 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Config holds the runtime configuration for portwatch.
+// Config holds all runtime configuration for portwatch.
 type Config struct {
-	Interval    time.Duration `yaml:"-"`
-	IntervalRaw string        `yaml:"interval"`
-	LogLevel    string        `yaml:"log_level"`
-	AlertFile   string        `yaml:"alert_file"`
-	IgnorePorts []int         `yaml:"ignore_ports"`
+	// Interval between port scans.
+	Interval time.Duration `yaml:"interval"`
+
+	// LogLevel controls verbosity: "info" or "warn".
+	LogLevel string `yaml:"log_level"`
+
+	// IgnorePorts lists port numbers that should never trigger alerts.
+	IgnorePorts []int `yaml:"ignore_ports"`
+
+	// SnapshotPath is the file used to persist the last known state.
+	SnapshotPath string `yaml:"snapshot_path"`
 }
 
 // DefaultConfig returns a Config populated with sensible defaults.
-func DefaultConfig() *Config {
-	return &Config{
-		IntervalRaw: "5s",
-		Interval:    5 * time.Second,
-		LogLevel:    "info",
-		AlertFile:   "",
-		IgnorePorts: []int{},
+func DefaultConfig() Config {
+	return Config{
+		Interval:     15 * time.Second,
+		LogLevel:     "info",
+		IgnorePorts:  []int{},
+		SnapshotPath: "/var/lib/portwatch/snapshot.json",
 	}
 }
 
-// Load reads a YAML config file from path and returns a validated Config.
-// If path is empty, the default config is returned.
-func Load(path string) (*Config, error) {
+// Load reads a YAML config file from path and merges it over the defaults.
+// If path is empty, the default config is returned unchanged.
+func Load(path string) (Config, error) {
 	cfg := DefaultConfig()
 	if path == "" {
 		return cfg, nil
 	}
-
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("config: read file: %w", err)
+		return cfg, err
 	}
-
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return nil, fmt.Errorf("config: parse yaml: %w", err)
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return cfg, err
 	}
-
-	if err := cfg.validate(); err != nil {
-		return nil, err
-	}
-
 	return cfg, nil
-}
-
-func (c *Config) validate() error {
-	if c.IntervalRaw != "" {
-		d, err := time.ParseDuration(c.IntervalRaw)
-		if err != nil {
-			return fmt.Errorf("config: invalid interval %q: %w", c.IntervalRaw, err)
-		}
-		if d < time.Second {
-			return fmt.Errorf("config: interval %q is too short (minimum 1s)", c.IntervalRaw)
-		}
-		c.Interval = d
-	}
-
-	switch c.LogLevel {
-	case "info", "warn", "error", "debug":
-	default:
-		return fmt.Errorf("config: unknown log_level %q", c.LogLevel)
-	}
-
-	return nil
 }
