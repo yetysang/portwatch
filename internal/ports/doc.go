@@ -1,21 +1,25 @@
-// Package ports provides types and utilities for scanning active TCP/UDP port
-// bindings on the local system.
+// Package ports provides primitives for discovering, filtering, and enriching
+// network port binding information on the local system.
 //
 // # Scanner
 //
-// NewScanner returns a Scanner that reads from /proc/net/tcp and /proc/net/tcp6
-// to enumerate listening ports. Each result is returned as a Binding value
-// containing the protocol, address, and port.
+// NewScanner returns a Scanner that reads active TCP/UDP bindings from the
+// /proc/net filesystem. Call Scan() to obtain a snapshot of current bindings
+// as a map keyed by "proto:ip:port".
 //
 // # Filter
 //
-// NewFilter wraps an IgnoreSet and can be used to exclude known or expected
-// bindings from scan results before they are passed to the monitor.
+// NewFilter wraps an IgnoreSet and removes user-configured ports from a
+// binding map before it is handed to the monitor.
+//
+// # Resolver
+//
+// NewResolver enriches Binding values with reverse-DNS hostnames and IANA
+// service names. Resolution is best-effort; failures fall back to the raw IP
+// address or numeric port string.
 //
 // # Proc
 //
-// LookupProc resolves a PID to a human-readable process name by reading from
-// the /proc filesystem. ParseInode extracts the inode field from a raw
-// /proc/net entry, which can be used to correlate sockets with processes via
-// /proc/<pid>/fd symlinks.
+// LookupProc resolves the owning process (PID + command name) for a socket
+// inode by walking /proc/*/fd symlinks.
 package ports
