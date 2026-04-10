@@ -82,3 +82,15 @@ func TestParseInode_LargeValue(t *testing.T) {
 	}
 	_ = fmt.Sprintf("inode=%d", inode) // suppress unused warning
 }
+
+func TestParseInode_ZeroInode(t *testing.T) {
+	fields := make([]string, 10)
+	fields[9] = "0"
+	inode, err := ParseInode(fields)
+	if err != nil {
+		t.Fatalf("unexpected error for zero inode: %v", err)
+	}
+	if inode != 0 {
+		t.Errorf("expected inode 0, got %d", inode)
+	}
+}
