@@ -1,28 +1,30 @@
-// Package alert implements change notification handlers for portwatch.
+// Package alert provides composable handlers for dispatching port-change
+// notifications to various sinks.
 //
-// The primary type is Handler, which formats and buffers alert lines for
-// consumption by the CLI layer. Each alert line is prefixed with a severity
-// level (INFO or WARN) derived from the nature of the port change.
+// # Handlers
 //
-// Severity levels
+// Each handler implements the Handler interface:
 //
-// INFO is used for ports that have been closed or released. WARN is used for
-// newly opened ports, since unexpected listeners may indicate a security
-// concern or misconfiguration.
-//
-// Rate-limiting
-//
-// RateLimitedHandler wraps a Handler with a ports.RateLimiter so that
-// repeated alerts for the same port/protocol pair are suppressed during a
-// configurable cooldown window. This prevents log spam when a process
-// repeatedly opens and closes the same port in quick succession.
-//
-// Usage:
-//
-//	rl := ports.NewRateLimiter(30 * time.Second)
-//	h := alert.NewRateLimitedHandler(alert.NewHandler(cfg), rl)
-//	h.Handle(changes)
-//	for _, line := range h.Drain() {
-//		fmt.Println(line)
+//	type Handler interface {
+//		Handle(changes []monitor.Change) error
 //	}
+//
+// Available implementations:
+//
+//   - [NewHandler]           – structured log handler (zerolog)
+//   - [NewStdoutHandler]     – human-readable stdout lines
+//   - [NewFileHandler]       – append JSON-lines to a file
+//   - [NewWebhookHandler]    – HTTP POST JSON payload
+//   - [NewMultiHandler]      – fan-out to multiple handlers
+//   - [NewRateLimitedHandler]– per-change-key cooldown wrapper
+//   - [NewThrottleHandler]   – whole-batch quiet-window wrapper
+//
+// # Composition
+//
+// Handlers are designed to be composed. A typical production setup:
+//
+//	multi := alert.NewMultiHandler(
+//		alert.NewRateLimitedHandler(alert.NewStdoutHandler(os.Stdout), cfg),
+//		alert.NewThrottleHandler(alert.NewWebhookHandler(webhookURL), 30*time.Second),
+//	)
 package alert
