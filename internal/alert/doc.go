@@ -4,6 +4,12 @@
 // consumption by the CLI layer. Each alert line is prefixed with a severity
 // level (INFO or WARN) derived from the nature of the port change.
 //
+// Severity levels
+//
+// INFO is used for ports that have been closed or released. WARN is used for
+// newly opened ports, since unexpected listeners may indicate a security
+// concern or misconfiguration.
+//
 // Rate-limiting
 //
 // RateLimitedHandler wraps a Handler with a ports.RateLimiter so that
