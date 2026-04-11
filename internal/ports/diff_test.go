@@ -98,3 +98,12 @@ func TestDiff_AddedAndRemoved(t *testing.T) {
 		t.Errorf("expected 1 added and 1 removed, got %d/%d", added, removed)
 	}
 }
+
+func TestDiff_BothEmpty(t *testing.T) {
+	prev := BindingsToMap(nil)
+	curr := BindingsToMap(nil)
+	changes := Diff(prev, curr)
+	if len(changes) != 0 {
+		t.Fatalf("expected no changes for two empty maps, got %d", len(changes))
+	}
+}
