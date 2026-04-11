@@ -41,3 +41,13 @@ func ParseInode(fields []string) (uint64, error) {
 	}
 	return inode, nil
 }
+
+// String returns a human-readable representation of ProcInfo.
+// If the process name is known, it formats as "<name>(<pid>)".
+// Otherwise it falls back to just the PID.
+func (p ProcInfo) String() string {
+	if p.Name != "" {
+		return fmt.Sprintf("%s(%d)", p.Name, p.PID)
+	}
+	return fmt.Sprintf("%d", p.PID)
+}
