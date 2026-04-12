@@ -36,6 +36,9 @@ func (c SummaryConfig) Validate() error {
 	if !c.Enabled {
 		return nil
 	}
+	if c.Interval <= 0 {
+		return errors.New("summary interval must be a positive duration")
+	}
 	if c.Interval < 10*time.Second {
 		return errors.New("summary interval must be at least 10s")
 	}
@@ -43,4 +46,17 @@ func (c SummaryConfig) Validate() error {
 		return errors.New("summary interval must not exceed 24h")
 	}
 	return nil
+}
+
+// WithDefaults returns a new SummaryConfig with zero-value fields replaced by
+// their defaults from DefaultSummaryConfig. Explicitly set values are preserved.
+func (c SummaryConfig) WithDefaults() SummaryConfig {
+	defaults := DefaultSummaryConfig()
+	if c.Interval <= 0 {
+		c.Interval = defaults.Interval
+	}
+	if c.Prefix == "" {
+		c.Prefix = defaults.Prefix
+	}
+	return c
 }
