@@ -13,8 +13,8 @@ import (
 type Level string
 
 const (
-	LevelInfo  Level = "INFO"
-	LevelWarn  Level = "WARN"
+	LevelInfo Level = "INFO"
+	LevelWarn Level = "WARN"
 )
 
 // Alert holds a formatted notification about a port change.
@@ -83,4 +83,17 @@ func (h *Handler) Drain(changes <-chan monitor.Change, stop <-chan struct{}) {
 			return
 		}
 	}
+}
+
+// AddToWatchlist adds a port to the handler's watchlist so that it triggers
+// WARN-level alerts. Calling this method is safe between Drain iterations but
+// should not be called concurrently with Handle or Drain.
+func (h *Handler) AddToWatchlist(port int) {
+	h.watchlist[port] = true
+}
+
+// RemoveFromWatchlist removes a port from the watchlist, reverting its alerts
+// to INFO level. No-op if the port was not previously watched.
+func (h *Handler) RemoveFromWatchlist(port int) {
+	delete(h.watchlist, port)
 }
