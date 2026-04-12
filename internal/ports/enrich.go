@@ -97,3 +97,17 @@ func (e *Enricher) readProcessName(pidStr string) string {
 	}
 	return strings.TrimSpace(string(data))
 }
+
+// readCmdline reads the full command line for a given pid string,
+// returning the first argument (executable path) trimmed of its directory.
+// This provides a more descriptive name than comm for processes that
+// set a custom comm value.
+func (e *Enricher) readCmdline(pidStr string) string {
+	data, err := os.ReadFile(filepath.Join(e.procRoot, pidStr, "cmdline"))
+	if err != nil || len(data) == 0 {
+		return ""
+	}
+	// cmdline arguments are null-byte separated; take only the first.
+	exe := strings.SplitN(string(data), "\x00", 2)[0]
+	return filepath.Base(exe)
+}
