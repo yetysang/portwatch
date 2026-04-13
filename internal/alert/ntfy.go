@@ -19,10 +19,10 @@ type NtfyConfig struct {
 }
 
 type ntfyPayload struct {
-	Topic    string `json:"topic"`
-	Title    string `json:"title"`
-	Message  string `json:"message"`
-	Priority string `json:"priority"`
+	Topic    string   `json:"topic"`
+	Title    string   `json:"title"`
+	Message  string   `json:"message"`
+	Priority string   `json:"priority"`
 	Tags     []string `json:"tags"`
 }
 
@@ -41,27 +41,35 @@ func (h *ntfyHandler) Handle(changes []monitor.Change) error {
 		return nil
 	}
 	for _, c := range changes {
-		payload := formatNtfyMsg(h.cfg.Topic, c)
-		data, err := json.Marshal(payload)
-		if err != nil {
-			return fmt.Errorf("ntfy: marshal: %w", err)
+		if err := h.sendChange(c); err != nil {
+			return err
 		}
-		req, err := http.NewRequest(http.MethodPost, h.cfg.ServerURL, bytes.NewReader(data))
-		if err != nil {
-			return fmt.Errorf("ntfy: build request: %w", err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-		if h.cfg.Token != "" {
-			req.Header.Set("Authorization", "Bearer "+h.cfg.Token)
-		}
-		resp, err := h.client.Do(req)
-		if err != nil {
-			return fmt.Errorf("ntfy: post: %w", err)
-		}
-		resp.Body.Close()
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			return fmt.Errorf("ntfy: unexpected status %d", resp.StatusCode)
-		}
+	}
+	return nil
+}
+
+// sendChange posts a single change event to the ntfy server.
+func (h *ntfyHandler) sendChange(c monitor.Change) error {
+	payload := formatNtfyMsg(h.cfg.Topic, c)
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("ntfy: marshal: %w", err)
+	}
+	req, err := http.NewRequest(http.MethodPost, h.cfg.ServerURL, bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("ntfy: build request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if h.cfg.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+h.cfg.Token)
+	}
+	resp, err := h.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("ntfy: post: %w", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("ntfy: unexpected status %d", resp.StatusCode)
 	}
 	return nil
 }
