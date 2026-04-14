@@ -48,6 +48,19 @@ func TestHandler_WarnLevel(t *testing.T) {
 	}
 }
 
+// TestHandler_NonWatchedPort verifies that a port not in the watch list
+// produces an INFO-level alert rather than a WARN-level alert.
+func TestHandler_NonWatchedPort(t *testing.T) {
+	var buf bytes.Buffer
+	h := NewHandler(&buf, []int{22, 3389})
+
+	a := h.Handle(makeChange("added", "tcp", "0.0.0.0", 8080))
+
+	if a.Level != LevelInfo {
+		t.Errorf("expected INFO for non-watched port, got %s", a.Level)
+	}
+}
+
 func TestHandler_OutputFormat(t *testing.T) {
 	var buf bytes.Buffer
 	h := NewHandler(&buf, nil)
