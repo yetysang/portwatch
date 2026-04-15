@@ -1,7 +1,11 @@
 // Package ports provides utilities for scanning and comparing port bindings.
 package ports
 
-import "github.com/user/portwatch/internal/monitor"
+import (
+	"fmt"
+
+	"github.com/user/portwatch/internal/monitor"
+)
 
 // Diff computes the changes between two snapshots of port bindings.
 // prev and curr are maps keyed by a stable binding identifier.
@@ -46,27 +50,13 @@ func Diff(prev, curr map[string]Binding) []monitor.Change {
 func BindingsToMap(bindings []Binding) map[string]Binding {
 	m := make(map[string]Binding, len(bindings))
 	for _, b := range bindings {
-		key := b.Proto + ":" + b.Addr + ":" + portStr(b.Port)
+		key := bindingKey(b)
 		m[key] = b
 	}
 	return m
 }
 
-func portStr(p int) string {
-	if p == 0 {
-		return "0"
-	}
-	return itoa(p)
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	buf := make([]byte, 0, 10)
-	for n > 0 {
-		buf = append([]byte{byte('0' + n%10)}, buf...)
-		n /= 10
-	}
-	return string(buf)
+// bindingKey returns a stable string identifier for a Binding in the form "proto:addr:port".
+func bindingKey(b Binding) string {
+	return fmt.Sprintf("%s:%s:%d", b.Proto, b.Addr, b.Port)
 }
