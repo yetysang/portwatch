@@ -35,7 +35,7 @@ func TestGotifyConfig_ValidateEnabledRequiresURL(t *testing.T) {
 	cfg.Enabled = true
 	cfg.Token = "tok"
 	if err := cfg.Validate(); err == nil {
-		t.Error("expected error when URL is missing")
+		t.Error("expected error when URL is empty")
 	}
 }
 
@@ -44,7 +44,7 @@ func TestGotifyConfig_ValidateEnabledRequiresToken(t *testing.T) {
 	cfg.Enabled = true
 	cfg.URL = "http://gotify.example.com"
 	if err := cfg.Validate(); err == nil {
-		t.Error("expected error when Token is missing")
+		t.Error("expected error when Token is empty")
 	}
 }
 
@@ -54,7 +54,7 @@ func TestGotifyConfig_ValidateEnabledWithBothFields(t *testing.T) {
 	cfg.URL = "http://gotify.example.com"
 	cfg.Token = "mytoken"
 	if err := cfg.Validate(); err != nil {
-		t.Errorf("expected no error, got %v", err)
+		t.Errorf("expected no error with valid config, got %v", err)
 	}
 }
 
@@ -63,8 +63,8 @@ func TestGotifyConfig_ValidateInvalidPriority(t *testing.T) {
 	cfg.Enabled = true
 	cfg.URL = "http://gotify.example.com"
 	cfg.Token = "mytoken"
-	cfg.Priority = -1
+	cfg.Priority = 0
 	if err := cfg.Validate(); err == nil {
-		t.Error("expected error for negative priority")
+		t.Error("expected error for priority < 1")
 	}
 }
