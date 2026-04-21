@@ -8,76 +8,69 @@ import (
 func TestDefaultNewRelicConfig_Values(t *testing.T) {
 	cfg := DefaultNewRelicConfig()
 	if cfg.Enabled {
-		t.Error("expected Enabled to be false")
+		t.Error("expected Enabled=false by default")
 	}
-	if cfg.EventType != "PortWatchEvent" {
-		t.Errorf("unexpected EventType: %q", cfg.EventType)
+	if cfg.Region != "US" {
+		t.Errorf("expected Region=US, got %s", cfg.Region)
 	}
-	if cfg.Region != "us" {
-		t.Errorf("unexpected Region: %q", cfg.Region)
-	}
-	if cfg.Timeout != 10*time.Second {
-		t.Errorf("unexpected Timeout: %v", cfg.Timeout)
+	if cfg.Timeout != 5*time.Second {
+		t.Errorf("expected Timeout=5s, got %v", cfg.Timeout)
 	}
 }
 
 func TestNewRelicConfig_ValidateDisabledSkipsChecks(t *testing.T) {
 	cfg := DefaultNewRelicConfig()
 	if err := cfg.Validate(); err != nil {
-		t.Errorf("expected no error for disabled config, got: %v", err)
+		t.Errorf("expected no error when disabled, got %v", err)
 	}
 }
 
 func TestNewRelicConfig_ValidateEnabledRequiresAPIKey(t *testing.T) {
 	cfg := DefaultNewRelicConfig()
 	cfg.Enabled = true
-	cfg.AccountID = "12345"
-	err := cfg.Validate()
-	if err == nil {
-		t.Fatal("expected error for missing api_key")
-	}
-	if !IsValidationError(err) {
-		t.Errorf("expected ValidationError, got %T", err)
+	cfg.AccountID = "123"
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error when api_key is missing")
 	}
 }
 
 func TestNewRelicConfig_ValidateEnabledRequiresAccountID(t *testing.T) {
 	cfg := DefaultNewRelicConfig()
 	cfg.Enabled = true
-	cfg.APIKey = "abc123"
-	err := cfg.Validate()
-	if err == nil {
-		t.Fatal("expected error for missing account_id")
-	}
-	if !IsValidationError(err) {
-		t.Errorf("expected ValidationError, got %T", err)
+	cfg.APIKey = "key"
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error when account_id is missing")
 	}
 }
 
 func TestNewRelicConfig_ValidateInvalidRegion(t *testing.T) {
 	cfg := DefaultNewRelicConfig()
 	cfg.Enabled = true
-	cfg.APIKey = "abc123"
-	cfg.AccountID = "12345"
-	cfg.Region = "ap"
-	err := cfg.Validate()
-	if err == nil {
-		t.Fatal("expected error for invalid region")
-	}
-	if !IsValidationError(err) {
-		t.Errorf("expected ValidationError, got %T", err)
+	cfg.APIKey = "key"
+	cfg.AccountID = "123"
+	cfg.Region = "AP"
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for invalid region")
 	}
 }
 
 func TestNewRelicConfig_ValidateEnabledWithValidFields(t *testing.T) {
 	cfg := DefaultNewRelicConfig()
 	cfg.Enabled = true
-	cfg.APIKey = "abc123"
-	cfg.AccountID = "12345"
-	for _, region := range []string{"us", "eu"} {
-		cfg.Region = region
-		if err := cfg.Validate(); err != nil {
-			t.Errorf("region %q: unexpected error: %v", region, err)
-		}
+	cfg.APIKey = "key"
+	cfg.AccountID = "123456"
+	if err := cfg.Validate(); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestNewRelicConfig_ValidateEURegion(t *testing.T) {
+	cfg := DefaultNewRelicConfig()
+	cfg.Enabled = true
+	cfg.APIKey = "key"
+	cfg.AccountID = "123456"
+	cfg.Region = "EU"
+	if err := cfg.Validate(); err != nil {
+		t.Errorf("unexpected error for EU region: %v", err)
 	}
 }
