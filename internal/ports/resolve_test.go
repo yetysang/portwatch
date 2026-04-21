@@ -44,6 +44,19 @@ func TestResolver_ResolveFallsBackToIP(t *testing.T) {
 	}
 }
 
+func TestResolver_ResolveEmptyHostsList(t *testing.T) {
+	// lookupAddr returns no error but an empty hosts slice; should fall back to IP.
+	r := &Resolver{
+		lookupAddr: stubLookupAddr([]string{}, nil),
+		lookupPort: stubLookupPort("http"),
+	}
+	b := Binding{IP: "10.0.0.1", Port: 80, Proto: "tcp"}
+	rb := r.Resolve(b)
+	if rb.Hostname != "10.0.0.1" {
+		t.Errorf("expected IP fallback %q, got %q", "10.0.0.1", rb.Hostname)
+	}
+}
+
 func TestResolver_ResolveAll(t *testing.T) {
 	r := &Resolver{
 		lookupAddr: stubLookupAddr([]string{"localhost."}, nil),
