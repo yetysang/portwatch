@@ -45,6 +45,16 @@ func (h *PrometheusHandler) Handle(changes []monitor.Change) error {
 // Drain is a no-op for the Prometheus handler.
 func (h *PrometheusHandler) Drain() error { return nil }
 
+// Reset zeroes all counters. Useful in tests or when a scrape cycle requires
+// delta (rather than cumulative) counts.
+func (h *PrometheusHandler) Reset() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.added = 0
+	h.removed = 0
+	h.total = 0
+}
+
 // ServeHTTP writes Prometheus text-format metrics.
 func (h *PrometheusHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	h.mu.Lock()
