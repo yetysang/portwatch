@@ -94,3 +94,13 @@ func TestParseInode_ZeroInode(t *testing.T) {
 		t.Errorf("expected inode 0, got %d", inode)
 	}
 }
+
+func TestParseInode_NegativeValue(t *testing.T) {
+	// ParseInode returns a uint64, so a negative string should produce a parse error.
+	fields := make([]string, 10)
+	fields[9] = "-1"
+	_, err := ParseInode(fields)
+	if err == nil {
+		t.Error("expected error for negative inode value")
+	}
+}
