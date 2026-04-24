@@ -1,20 +1,23 @@
-// VictorOps Handler
+// Package alert provides alert handlers for portwatch.
 //
-// NewVictorOpsHandler creates an alert handler that posts notifications to a
-// VictorOps REST monitoring endpoint. The webhook URL should include the
-// routing key, e.g.:
+// # VictorOps (Splunk On-Call) Handler
 //
-//	https://alert.victorops.com/integrations/generic/20131114/alert/<api-key>/<routing-key>
+// NewVictorOpsHandler sends port-change alerts to VictorOps (now known as
+// Splunk On-Call) using the REST endpoint integration.
 //
-// Payload fields:
+// Each binding change is mapped to a VictorOps message_type:
 //
-//	- message_type:    "CRITICAL" for added bindings, "RECOVERY" for removed.
-//	- entity_id:       proto/port string used to correlate alert and recovery.
-//	- state_message:   human-readable description of the change.
-//	- monitoring_tool: always "portwatch".
+//	- Added bindings  → CRITICAL
+//	- Removed bindings → RECOVERY
 //
-// Only the first change in a batch is used to set the message_type and
-// entity_id; the full batch count is not currently summarised.
+// Configuration:
 //
-// Drain is a no-op for this handler.
+//	victorops:
+//	  enabled: true
+//	  url: "https://alert.victorops.com/integrations/generic/20131114/alert"
+//	  routing_key: "your-routing-key"
+//	  timeout: 10s
+//
+// The routing_key is appended to the URL as a path segment when sending
+// the alert, following the VictorOps REST endpoint convention.
 package alert
